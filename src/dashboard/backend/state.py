@@ -20,14 +20,23 @@ class DashboardState:
         self.latest_frame_jpeg: bytes | None = None
         self.frame_id = 0
 
-    def set_tokens_per_sec(self, tokens_per_sec: float) -> None:
-        with self._lock:
-            self.tokens_per_sec = tokens_per_sec
+    def record_observation(self, observation: ObservationRecord,
+                          tokens_per_sec: float | None,
+                          frame_jpeg: bytes | None) -> None:
+        """Commits an observation and its frame together, under one lock.
 
-    def set_frame(self, frame_jpeg: bytes) -> None:
+        These must not be separate calls: a snapshot landing between them would pair
+        the new observation with the *previous* frame, so the dashboard would show
+        reasoning that describes something other than the image beside it — which for
+        a security tool reads as the model hallucinating.
+        """
         with self._lock:
-            self.latest_frame_jpeg = frame_jpeg
-            self.frame_id += 1
+            self.history.append(observation)
+            if tokens_per_sec is not None:
+                self.tokens_per_sec = tokens_per_sec
+            if frame_jpeg is not None:
+                self.latest_frame_jpeg = frame_jpeg
+                self.frame_id += 1
 
     def get_frame(self) -> bytes | None:
         with self._lock:
@@ -40,10 +49,6 @@ class DashboardState:
             self.ram_total_gb = ram_total_gb
             self.cpu_pct = cpu_pct
             self.stats_source = stats_source
-
-    def add_observation(self, observation: ObservationRecord) -> None:
-        with self._lock:
-            self.history.append(observation)
 
     def snapshot(self) -> dict:
         with self._lock:

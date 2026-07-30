@@ -17,7 +17,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Placed just before the model pull (not at the top of the file) so changing
 # the model tag only invalidates this layer onward, not apt/pip too.
-ARG MODEL_NAME=gemma4:e2b
+ARG MODEL_NAME=gemma4:e2b-it-qat
 ENV MODEL_NAME=${MODEL_NAME}
 
 COPY docker/pull_model.sh /tmp/pull_model.sh

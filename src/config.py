@@ -13,7 +13,12 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-MODEL_NAME = os.getenv("MODEL_NAME", "gemma4:e2b")
+# QAT (quantization-aware trained) rather than the default post-training-quantized
+# gemma4:e2b: 4.34GB vs 7.16GB on disk (~3.6GB vs ~5.87GB resident), which is the
+# difference between ~2.4GB of headroom in the 6GB cap and running at 97% with swap
+# thrashing. QAT holds quality at low precision far better than naive quantization,
+# so this is a near-free win rather than a quality-for-size trade.
+MODEL_NAME = os.getenv("MODEL_NAME", "gemma4:e2b-it-qat")
 
 # Host default assumes the dev-on-Windows case: the container publishes its Ollama
 # on 11435. Inside the container, set OLLAMA_HOST=http://localhost:11434.

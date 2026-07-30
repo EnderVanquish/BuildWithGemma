@@ -158,12 +158,20 @@ one-sentence hook.
   when only `--memory` is given is 2x (i.e. swap allowed), which is why it worked before the
   "increase". Caps are now `--memory=6g --memory-swap=12g --cpus=2`; see
   `docker/resource_caps.md`.
-- **This machine is the binding constraint, not the design.** Docker's VM is 7.611 GiB and the
-  Windows host usually has ~1 GiB free, so the container cannot grow beyond ~6GB. At 6GB it
-  runs at ~97% memory with swap thrashing during inference — functional but with no headroom,
-  and that thrashing is a major contributor to the ~3.3 tok/s figure. Smaller Gemma 4 variants
-  (`gemma4:e2b-it-qat`, or the community `gemma4-nano` Q3_K_S at ~3.1GB) are the obvious lever
-  if speed becomes a blocker, and would keep the project on Gemma 4.
+- **Memory is host-bound; speed was CPU-bound.** Docker's VM is 7.611 GiB and the Windows host
+  usually has ~1 GiB free, so the container cannot grow beyond ~6GB. Two changes followed, with
+  only one doing what was expected:
+  - **Model swapped to `gemma4:e2b-it-qat`** (4.34GB download vs 7.16GB; 4.61GB vs 5.70GB
+    resident). Verified via Ollama's registry API that no smaller official quantisation exists —
+    tags like `e2b-q4_0` / `e2b-q3_K_S` 404, and the only ~3.1GB option is an unofficial
+    community re-quant, avoided for a judged submission. **This did not improve speed**
+    (2.11 → 2.21 tok/s is noise); the earlier assumption that thrashing was throttling
+    inference was wrong. It earned its place on memory headroom alone, which is what makes
+    running Flask + OpenCV in the same container feasible.
+  - **CPUs raised 2 → 4**, which gave **~2.2x (2.11 → 4.7 tok/s)**, near-linear. This also made
+    the simulation *more* faithful, since the cited reference boards (RPi 4/5, Jetson Orin Nano)
+    are quad/hexa-core; 2 cores was arbitrarily stricter than the hardware being claimed.
+  Net effect: ~35-60s per observation instead of 170-190s.
 
 ## Frame-source config
 The reasoning loop reads its source from env vars (`src/config.py`, `.env` supported):

@@ -41,11 +41,9 @@ def _stats_loop() -> None:
 
 def _on_observation(record: ObservationRecord, tokens_per_sec: float | None,
                     frame_jpeg: bytes | None) -> None:
-    state.add_observation(record)
-    if tokens_per_sec is not None:
-        state.set_tokens_per_sec(tokens_per_sec)
-    if frame_jpeg is not None:
-        state.set_frame(frame_jpeg)
+    # Single atomic commit so the dashboard never shows an observation next to a
+    # frame it wasn't derived from.
+    state.record_observation(record, tokens_per_sec, frame_jpeg)
 
 
 def _reasoning_thread() -> None:

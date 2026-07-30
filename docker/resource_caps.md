@@ -28,8 +28,22 @@ this container. `oom_kill` was still 0, but there was no usable margin.
 
 ## Chosen caps
 ```
---memory=6g --memory-swap=12g --cpus=2
+--memory=6g --memory-swap=12g --cpus=4
 ```
+
+### Why 4 CPUs (measured, and more faithful)
+Originally 2, on the reasoning that "more restrictive is safer to claim". That was wrong on
+both counts. Measured throughput:
+
+| CPUs | tokens/sec | ~time per observation |
+|---|---|---|
+| 2 | 2.11 - 2.21 | 170 - 190s |
+| **4** | **4.7** | **~35 - 60s** |
+
+~2.2x, near-linear — inference here is CPU-bound, not memory-bound. 4 cores is also *closer*
+to the cited reference hardware (Raspberry Pi 4/5 are quad-core, Jetson Orin Nano is 6-core),
+so this made the simulation both faster and more accurate. The Docker VM has 16 cores
+available, so 4 is still a genuine constraint.
 
 ### Why 6GB, and why --memory-swap matters
 An 8GB cap was attempted first, then 7GB. Both were abandoned:
@@ -77,13 +91,27 @@ models on that NPU rather than general-purpose LLM inference against a CPU/RAM b
 vendors don't publish their RAM specs, so they aren't a fair "can it run Gemma" comparison.
 
 ## Measured throughput
-**3.29 tokens/sec** for a multimodal call at `--memory=6g --cpus=2` (measured from Ollama's
-own `eval_count` / `eval_duration`, not wall-clock). Some of that slowness was the memory
-thrashing above, so this should be re-measured at 7GB.
+All figures from Ollama's own `eval_count` / `eval_duration`, not wall-clock guesswork.
 
-This number is the concrete justification for the periodic-sampling design: at a few tokens
-per second, continuous streaming inference is not viable on this class of hardware, so
-sampling every N seconds is an engineering necessity framed as a deliberate design choice.
+| Config | tokens/sec | anon resident |
+|---|---|---|
+| `gemma4:e2b`, 2 CPUs | 2.11 | 5.70 GB |
+| `gemma4:e2b-it-qat`, 2 CPUs | 2.21 | 4.61 GB |
+| **`gemma4:e2b-it-qat`, 4 CPUs** | **4.7** | 4.61 GB |
+
+Two things worth recording honestly:
+
+- **The QAT swap did not improve speed** (2.11 → 2.21 tok/s is noise). The expectation that
+  relieving memory thrashing would speed things up was wrong — inference is CPU-bound here.
+  The swap earned its place on memory alone: 1.09GB less resident memory, which is what
+  leaves room for Flask and OpenCV to run in the same container.
+- **CPU count was the real lever**: 2 → 4 cores gave ~2.2x. See the caps section above.
+
+This is still the concrete justification for periodic sampling: at ~5 tok/s, continuous
+streaming inference is not viable on this class of hardware. With inference at ~35-60s and
+`SAMPLE_INTERVAL_SECONDS` at 150, the device now genuinely idles ~90-115s between samples —
+which is what makes the "periodic sampling is an edge-efficiency choice" claim actually true
+rather than a rationalisation of being slow.
 
 ## Reporting the cap honestly
 `src/monitor/resources.py` reads the container's cgroup memory (`memory.current` /
