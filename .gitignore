@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+
+# Env / secrets
+.env
+
+# Model caches / Ollama
+*.gguf
+models/
+.ollama/
+
+# Demo media (large binaries, don't want these bloating the repo/history)
+demo/clips/*.mp4
+demo/clips/*.mov
+demo/clips/*.avi
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/

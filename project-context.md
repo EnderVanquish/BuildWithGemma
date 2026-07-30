@@ -74,12 +74,34 @@ one-sentence hook.
   during the demo (exact tooling not yet decided)
 - Rolling history of past observations fed back into each Gemma call for temporal context
 
+## Decisions made (2026-07-30 clarification round)
+- **Submission format**: the hackathon submission is reviewed asynchronously — a Kaggle
+  Writeup (<=1500 words), a public code repo, and a demo video/notebook. There is no live
+  pitch/Q&A. This means we optimize for a clean recorded take rather than for live-demo
+  robustness — scripted/looped clips and retakes are fine if the final video looks good.
+- **Camera feed**: build genuine live-feed capability (phone via Iriun/DroidCam or similar),
+  but the actual recorded demo will primarily use a pre-recorded video snippet for
+  reliability, since a live feed doesn't need to survive the recording moment itself.
+- **Dashboard**: a simple local web page (HTML/JS + a small backend), not Streamlit/Gradio/
+  terminal UI. Shows RAM/CPU/tokens-per-sec and the network monitor (proving zero outbound
+  traffic).
+- **Containerization is the organizing constraint for everything, not just the reasoning
+  pipeline.** The whole system (reasoning loop, dashboard/backend, any supporting services)
+  should be built with Docker resource-capping in mind from the start — i.e. design as if
+  everything must run inside the same resource-constrained container(s) that simulate the
+  target edge hardware, not bolt the container limits on at the end around a system that
+  was built assuming unconstrained local dev resources.
+- **Resource cap values**: should reflect the real specs of a basic security camera's
+  onboard processing chip (e.g. entry-level ARM SoC class hardware), not an arbitrary
+  round number. Exact figures (`--memory`, `--cpus`) still TBD — to be picked once we
+  research typical onboard chip specs for consumer/basic security cameras.
+- **Identity/familiarity concept**: still undecided, revisit after latency testing (unchanged).
+
 ## Not yet decided / open questions
-- Exact camera feed source for the live demo (leaning toward pre-recorded/looped scripted
-  scenario clips for reliability, possibly with a live feed as a bonus moment)
+- Exact camera feed source for the final recorded demo clip
 - Frame sampling frequency (depends on latency testing)
 - Exact prompt/output schema for Gemma's structured response
-- Dashboard implementation (Streamlit? simple terminal output? something else?)
+- Concrete Docker resource cap numbers (pending research into basic security-camera chip specs)
 - Whether to add any face/identity-familiarity concept ("recognized household member")
   and how, without turning it back into a classifier-first system
 
