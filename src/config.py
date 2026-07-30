@@ -19,11 +19,17 @@ MODEL_NAME = os.getenv("MODEL_NAME", "gemma4:e2b")
 # on 11435. Inside the container, set OLLAMA_HOST=http://localhost:11434.
 OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11435")
 
-# Wall-clock floor between samples. Deliberately periodic rather than continuous —
-# an edge-efficiency design choice. Note this is a *floor*, not the real cadence:
-# CPU-only inference currently takes ~60-90s, which exceeds this, so the actual
-# sampling rate is inference-bound. It only starts to bite on faster hardware.
-SAMPLE_INTERVAL_SECONDS = float(os.getenv("SAMPLE_INTERVAL_SECONDS", "10"))
+# Wall-clock floor between samples. Set ABOVE measured inference time on purpose.
+#
+# Measured on this hardware: ~132s per observation at 1.6-3.3 tok/s. If this floor is
+# set below that (e.g. 10s), the loop never sleeps and the CPU is pegged at 100%
+# continuously — which would make the project's "periodic sampling is an
+# edge-efficiency choice" claim false, since the device would never idle. Keeping it
+# above inference time is what makes that claim actually true.
+#
+# It also suits the task: "lingered 3 minutes", "returned 3x in 10 minutes" is
+# minute-scale reasoning, so sub-10s sampling would add cost without adding signal.
+SAMPLE_INTERVAL_SECONDS = float(os.getenv("SAMPLE_INTERVAL_SECONDS", "150"))
 
 # How far to seek forward through a *recorded clip* per sample. Deliberately separate
 # from SAMPLE_INTERVAL_SECONDS: that one paces real time, this one controls how much
