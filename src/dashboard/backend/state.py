@@ -15,6 +15,23 @@ class DashboardState:
         self.network_status = "good"
         self.stats_source = "host"
         self.history: list[ObservationRecord] = []
+        # Latest frame, JPEG-encoded, held in memory only so the dashboard can show
+        # what was just reasoned about. Never written to disk — that's the privacy claim.
+        self.latest_frame_jpeg: bytes | None = None
+        self.frame_id = 0
+
+    def set_tokens_per_sec(self, tokens_per_sec: float) -> None:
+        with self._lock:
+            self.tokens_per_sec = tokens_per_sec
+
+    def set_frame(self, frame_jpeg: bytes) -> None:
+        with self._lock:
+            self.latest_frame_jpeg = frame_jpeg
+            self.frame_id += 1
+
+    def get_frame(self) -> bytes | None:
+        with self._lock:
+            return self.latest_frame_jpeg
 
     def update_stats(self, ram_used_gb: float, ram_total_gb: float,
                      cpu_pct: float, stats_source: str) -> None:
@@ -39,6 +56,7 @@ class DashboardState:
                 "tokens_per_sec": self.tokens_per_sec,
                 "network_status": self.network_status,
                 "stats_source": self.stats_source,
+                "frame_id": self.frame_id,
                 "latest_observation": latest.model_dump() if latest else None,
                 "history": [o.model_dump() for o in self.history[-8:]],
             }

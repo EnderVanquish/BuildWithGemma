@@ -58,8 +58,13 @@
 
     <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <div class="card card-rich bg-base-100 shadow-md p-4 items-center">
-        <figure class="w-full frame-glow rounded-lg">
-          <img id="frame-preview" class="rounded-lg w-full aspect-[4/3] object-cover bg-base-300" alt="Current camera frame" src="">
+        <figure class="w-full frame-glow rounded-lg relative">
+          <img id="frame-preview" class="rounded-lg w-full aspect-[4/3] object-cover bg-base-300 hidden" alt="Frame most recently reasoned about">
+          <div id="frame-empty"
+               class="rounded-lg w-full aspect-[4/3] bg-base-300 flex flex-col items-center justify-center gap-3 text-center px-6">
+            <span class="loading loading-ring loading-lg text-primary"></span>
+            <span class="text-sm text-base-content/60">Waiting for the first sampled frame&hellip;</span>
+          </div>
         </figure>
         <div class="text-sm text-base-content/60 tabular-nums mt-2" id="frame-timestamp">--</div>
       </div>

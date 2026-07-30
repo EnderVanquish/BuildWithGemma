@@ -1,9 +1,11 @@
 import ollama
 
+from config import MODEL_NAME, OLLAMA_HOST
+
 from .prompts import format_history
 from .schema import ObservationRecord
 
-QA_MODEL_NAME = "gemma4:e2b"
+_client = ollama.Client(host=OLLAMA_HOST)
 
 QA_SYSTEM_PROMPT = """You are answering questions about a security camera's observation \
 log. You are given the log (a list of past observations with timestamps, whether each \
@@ -13,11 +15,12 @@ say so rather than guessing."""
 
 
 def ask_about_history(question: str, history: list[ObservationRecord]) -> str:
-    response = ollama.chat(
-        model=QA_MODEL_NAME,
+    response = _client.chat(
+        model=MODEL_NAME,
         messages=[
             {"role": "system", "content": QA_SYSTEM_PROMPT},
             {"role": "user", "content": f"Log:\n{format_history(history)}\n\nQuestion: {question}"},
         ],
+        think=False,
     )
     return response["message"]["content"]

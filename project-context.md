@@ -143,6 +143,43 @@ one-sentence hook.
 - **CPU-only inference latency is significant** (tens of seconds per multimodal call under
   the cap), which supports the periodic-sampling design choice rather than undermining it —
   this is the number the dashboard's tokens/sec tile exists to make concrete.
+- **The end-to-end reasoning loop works.** Running `src/reasoning/loop.py` against the porch
+  CCTV clip produced a real structured observation ("An empty room with white walls, a white
+  door… a metal chair and a woven basket visible", `unusual=False`, `severity=none`) with the
+  reasoning correctly citing the absence of prior history, at 3.28 tok/s.
+- **Full-resolution CCTV frames must be downscaled.** The clip's frames are 2732x1440
+  (3.93 MP), above Gemma 4's ~2.6 MP input limit. `src/reasoning/client.py:downscale()` now
+  caps the longest side at `MAX_FRAME_DIM` (768px → ~0.31 MP). This is both a correctness fix
+  and a legitimate edge optimisation — a person at a door is perfectly legible at that size,
+  and it cuts memory and inference time.
+- **Zero swap is fatal, and it was a self-inflicted bug.** `docker update --memory=Xg
+  --memory-swap=Xg` sets swap to *zero*, which SIGKILLed `llama-server` on every inference
+  (39 `oom_kill` events) even while the container sat well below its limit. Docker's default
+  when only `--memory` is given is 2x (i.e. swap allowed), which is why it worked before the
+  "increase". Caps are now `--memory=6g --memory-swap=12g --cpus=2`; see
+  `docker/resource_caps.md`.
+- **This machine is the binding constraint, not the design.** Docker's VM is 7.611 GiB and the
+  Windows host usually has ~1 GiB free, so the container cannot grow beyond ~6GB. At 6GB it
+  runs at ~97% memory with swap thrashing during inference — functional but with no headroom,
+  and that thrashing is a major contributor to the ~3.3 tok/s figure. Smaller Gemma 4 variants
+  (`gemma4:e2b-it-qat`, or the community `gemma4-nano` Q3_K_S at ~3.1GB) are the obvious lever
+  if speed becomes a blocker, and would keep the project on Gemma 4.
+
+## Frame-source config
+The reasoning loop reads its source from env vars (`src/config.py`, `.env` supported):
+`FRAME_SOURCE` (video path, or an RTSP/HTTP URL), `SOURCE_KIND` (`file` | `stream`),
+`OLLAMA_HOST`, `SAMPLE_INTERVAL_SECONDS`, `MAX_FRAME_DIM`. With `FRAME_SOURCE` unset the
+backend still serves stats and the log, but the reasoning loop stays off.
+
+## Demo footage status
+`demo/clips/` holds a 50s 720p porch-theft CCTV clip (YouTube rip from a security installer's
+channel). **Fine for local development, but not safe to republish** in the demo video, the
+Kaggle writeup, or the public repo — no rights to the footage or the people in it. Same applies
+to `demo/scenarios/placeholder/image.png` and `src/dashboard/static/placeholder_frame.png`,
+which look like vendor marketing stills. Public-facing material should use Pexels footage
+(free, model-released, commercial use) or self-shot video. Note also that the clip's opening
+frames are an indoor/title scene rather than the porch, so the interesting moment is later in
+the timeline.
 
 ## Build order (revised mid-build)
 Originally planned as Docker-first (Docker was M1, before the reasoning pipeline). In

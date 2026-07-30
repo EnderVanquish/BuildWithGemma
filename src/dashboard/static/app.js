@@ -7,6 +7,7 @@ const SEVERITY_COLOR = {
 };
 
 let severityHistory = [];
+let lastFrameId = -1;
 
 function formatUptime(seconds) {
   const h = String(Math.floor(seconds / 3600)).padStart(2, "0");
@@ -39,6 +40,15 @@ function render(snapshot) {
     sourceNote.textContent = snapshot.stats_source === "cgroup"
       ? "container cap"
       : "host (uncapped dev)";
+  }
+
+  // Only refetch the frame when a new one has actually been reasoned about.
+  if (snapshot.frame_id > 0 && snapshot.frame_id > lastFrameId) {
+    lastFrameId = snapshot.frame_id;
+    const img = document.getElementById("frame-preview");
+    img.src = `/api/frame?v=${snapshot.frame_id}`;
+    img.classList.remove("hidden");
+    document.getElementById("frame-empty").classList.add("hidden");
   }
 
   const latest = snapshot.latest_observation;
@@ -125,8 +135,6 @@ document.getElementById("ask-form").addEventListener("submit", (e) => {
     askQuestion(input.value.trim());
   }
 });
-
-document.getElementById("frame-preview").src = "placeholder_frame.png";
 
 const events = new EventSource("/api/stream");
 events.onmessage = (e) => render(JSON.parse(e.data));
