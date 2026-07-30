@@ -1,4 +1,4 @@
-# BuildWithGemma — Privacy-First Local Security Camera Reasoner
+# Argus — Privacy-First Local Security Camera Reasoner
 
 A local security-camera reasoning assistant built for the Gemma 4 Hackathon Sprint
 (AI off the Grid track). Frames from a camera feed are periodically sent to a locally
@@ -24,4 +24,7 @@ Docker build/run instructions will be added once the all-in-one image (`docker/D
 is built.
 
 ## Status
-Early scaffolding — reasoning pipeline, dashboard, and Docker image are not yet implemented.
+Reasoning pipeline (`src/reasoning/`, `src/capture/`) and the dashboard skeleton
+(`src/dashboard/static/`, branded as Argus) are built; the Flask/SSE backend, feature
+work (ask-a-question, severity sparkline), and the Docker port/resource-cap validation
+are still in progress. See `project-context.md`'s "Milestones" section for current status.
