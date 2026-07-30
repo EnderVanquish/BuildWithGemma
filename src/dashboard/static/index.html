@@ -10,14 +10,42 @@
 </head>
 <body class="min-h-screen">
   <header class="navbar bg-base-100/80 backdrop-blur border-b border-white/5 shadow-lg px-6">
-    <div class="flex-1 flex items-center gap-3 font-bold text-xl brand-title">
-      Argus
+    <div class="flex-1 flex items-center gap-2.5">
+      <!-- Argus iris-shutter mark. The pupil is masked out rather than filled with the
+           surface colour, so the mark sits correctly on the navbar's translucent
+           backdrop instead of showing a solid disc slightly off from it. -->
+      <svg class="argus-mark" width="28" height="28" viewBox="0 0 32 32" aria-hidden="true">
+        <defs>
+          <linearGradient id="argus-iris" gradientUnits="userSpaceOnUse" x1="4" y1="4" x2="28" y2="28">
+            <stop offset="0" stop-color="#33b8d9"/>
+            <stop offset="1" stop-color="#1e3fe0"/>
+          </linearGradient>
+          <radialGradient id="argus-shade" cx="0.35" cy="0.3" r="0.75">
+            <stop offset="0" stop-color="#ffffff" stop-opacity="0.18"/>
+            <stop offset="1" stop-color="#000000" stop-opacity="0.22"/>
+          </radialGradient>
+          <mask id="argus-pupil">
+            <rect width="32" height="32" fill="#fff"/>
+            <circle cx="16" cy="16" r="4.6" fill="#000"/>
+          </mask>
+        </defs>
+        <g mask="url(#argus-pupil)">
+          <path d="M16 16 L28.97 16.91 A13 13 0 0 1 23.27 26.78 Z" fill="url(#argus-iris)"/>
+          <path d="M16 16 L21.70 27.68 A13 13 0 0 1 10.30 27.68 Z" fill="url(#argus-iris)"/>
+          <path d="M16 16 L8.73 26.78 A13 13 0 0 1 3.03 16.91 Z" fill="url(#argus-iris)"/>
+          <path d="M16 16 L3.03 15.09 A13 13 0 0 1 8.73 5.22 Z" fill="url(#argus-iris)"/>
+          <path d="M16 16 L10.30 4.32 A13 13 0 0 1 21.70 4.32 Z" fill="url(#argus-iris)"/>
+          <path d="M16 16 L23.27 5.22 A13 13 0 0 1 28.97 15.09 Z" fill="url(#argus-iris)"/>
+          <circle cx="16" cy="16" r="12.5" fill="url(#argus-shade)"/>
+        </g>
+      </svg>
+      <span class="font-bold text-xl brand-title">Argus</span>
     </div>
-    <div class="flex-none">
-      <span class="badge badge-lg gap-2 status-badge" id="network-badge" data-status="good">
-        <svg id="network-icon" class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.7 5.3a1 1 0 010 1.4l-7.4 7.4a1 1 0 01-1.4 0L3.3 9.5a1 1 0 111.4-1.4l3.9 3.9 6.7-6.7a1 1 0 011.4 0z" clip-rule="evenodd"/></svg>
-        <span id="network-label">NETWORK: OFFLINE</span>
-      </span>
+    <div class="flex-none flex items-center gap-3">
+      <a href="/" class="btn btn-sm btn-primary">Monitor</a>
+      <a href="/config.html" class="btn btn-sm btn-ghost">Config</a>
+      <span class="sync-dot" id="sync-dot" data-status="synced"
+            title="Live — receiving updates from the reasoning loop"></span>
     </div>
   </header>
 
@@ -39,6 +67,7 @@
         </div>
         <progress class="progress progress-primary w-full mb-2" id="cpu-fill" value="0" max="100"></progress>
         <div class="text-sm tabular-nums text-base-content/70" id="cpu-value">-- %</div>
+        <div class="text-[10px] uppercase tracking-wide text-base-content/40 mt-1" id="cpu-cores">&mdash;</div>
       </div>
       <div class="card card-rich bg-base-100 shadow-md p-4 justify-center">
         <div class="flex items-center gap-1.5 text-xs uppercase tracking-wide text-base-content/60 mb-2">
@@ -66,14 +95,44 @@
             <span class="text-sm text-base-content/60">Waiting for the first sampled frame&hellip;</span>
           </div>
         </figure>
-        <div class="text-sm text-base-content/60 tabular-nums mt-2" id="frame-timestamp">--</div>
+        <div class="flex items-center gap-3 mt-2">
+          <div class="text-sm text-base-content/60 tabular-nums" id="frame-timestamp">--</div>
+          <button type="button" id="frame-live-btn" class="btn btn-xs btn-outline btn-primary hidden">
+            Back to live
+          </button>
+        </div>
       </div>
 
-      <div class="card card-rich bg-base-100 shadow-md p-4 flex flex-col gap-3">
-        <div class="text-xs uppercase tracking-wide text-base-content/60">Latest reasoning</div>
-        <div class="text-base font-medium" id="latest-observation">Waiting for first observation&hellip;</div>
-        <span class="badge severity-badge w-fit" id="latest-severity" data-severity="none">Normal</span>
-        <div class="text-sm text-base-content/70 leading-relaxed" id="latest-reasoning"></div>
+      <div class="flex flex-col gap-4">
+        <div class="card card-rich bg-base-100 shadow-md p-4 flex flex-col gap-2">
+          <div class="text-xs uppercase tracking-wide text-base-content/60">Current status</div>
+          <div class="flex items-center gap-3">
+            <span class="status-light" id="status-light" data-level="green"></span>
+            <span class="text-lg font-semibold" id="status-word">Waiting&hellip;</span>
+            <span class="text-xs tabular-nums text-base-content/50 ml-auto" id="status-time"></span>
+          </div>
+          <div class="text-sm text-base-content/70 leading-relaxed" id="status-summary">
+            Waiting for first observation&hellip;
+          </div>
+        </div>
+
+        <div class="card card-rich bg-base-100 shadow-md p-4 flex flex-col gap-2" id="selected-card">
+          <div class="flex items-center justify-between">
+            <div class="text-xs uppercase tracking-wide text-base-content/60">Selected snapshot</div>
+            <span class="text-xs tabular-nums text-base-content/50" id="selected-time"></span>
+          </div>
+          <div id="selected-empty" class="text-sm text-base-content/50 leading-relaxed">
+            Click any row in the history below to see the frame and the reasoning behind it.
+          </div>
+          <div id="selected-body" class="hidden flex-col gap-2">
+            <div class="flex items-center gap-3">
+              <span class="status-light" id="selected-light" data-level="green"></span>
+              <span class="badge severity-badge w-fit" id="selected-severity" data-severity="none">Normal</span>
+            </div>
+            <div class="text-base font-medium" id="selected-observation"></div>
+            <div class="text-sm text-base-content/70 leading-relaxed" id="selected-reasoning"></div>
+          </div>
+        </div>
       </div>
     </section>
 

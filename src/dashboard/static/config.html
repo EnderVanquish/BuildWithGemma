@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Argus — Config</title>
+  <link rel="stylesheet" href="vendor/daisyui.css">
+  <script src="vendor/tailwind-browser.js"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="min-h-screen">
+  <header class="navbar bg-base-100/80 backdrop-blur border-b border-white/5 shadow-lg px-6">
+    <div class="flex-1 flex items-center gap-2.5">
+      <svg class="argus-mark" width="28" height="28" viewBox="0 0 32 32" aria-hidden="true">
+        <defs>
+          <linearGradient id="argus-iris" gradientUnits="userSpaceOnUse" x1="4" y1="4" x2="28" y2="28">
+            <stop offset="0" stop-color="#33b8d9"/>
+            <stop offset="1" stop-color="#1e3fe0"/>
+          </linearGradient>
+          <radialGradient id="argus-shade" cx="0.35" cy="0.3" r="0.75">
+            <stop offset="0" stop-color="#ffffff" stop-opacity="0.18"/>
+            <stop offset="1" stop-color="#000000" stop-opacity="0.22"/>
+          </radialGradient>
+          <mask id="argus-pupil">
+            <rect width="32" height="32" fill="#fff"/>
+            <circle cx="16" cy="16" r="4.6" fill="#000"/>
+          </mask>
+        </defs>
+        <g mask="url(#argus-pupil)">
+          <path d="M16 16 L28.97 16.91 A13 13 0 0 1 23.27 26.78 Z" fill="url(#argus-iris)"/>
+          <path d="M16 16 L21.70 27.68 A13 13 0 0 1 10.30 27.68 Z" fill="url(#argus-iris)"/>
+          <path d="M16 16 L8.73 26.78 A13 13 0 0 1 3.03 16.91 Z" fill="url(#argus-iris)"/>
+          <path d="M16 16 L3.03 15.09 A13 13 0 0 1 8.73 5.22 Z" fill="url(#argus-iris)"/>
+          <path d="M16 16 L10.30 4.32 A13 13 0 0 1 21.70 4.32 Z" fill="url(#argus-iris)"/>
+          <path d="M16 16 L23.27 5.22 A13 13 0 0 1 28.97 15.09 Z" fill="url(#argus-iris)"/>
+          <circle cx="16" cy="16" r="12.5" fill="url(#argus-shade)"/>
+        </g>
+      </svg>
+      <span class="font-bold text-xl brand-title">Argus</span>
+    </div>
+    <nav class="flex-none flex items-center gap-2">
+      <a href="/" class="btn btn-sm btn-ghost">Monitor</a>
+      <a href="/config.html" class="btn btn-sm btn-primary">Config</a>
+    </nav>
+  </header>
+
+  <main class="max-w-4xl mx-auto p-6 flex flex-col gap-6">
+    <div class="text-sm text-base-content/60">
+      Site-specific knowledge the model cannot get from a camera frame alone. Changes
+      apply to the next observation — no restart needed.
+    </div>
+
+    <section class="card card-rich bg-base-100 shadow-md p-4 flex flex-col gap-3">
+      <div>
+        <div class="text-xs uppercase tracking-wide text-base-content/60">Site context &amp; camera geometry</div>
+        <div class="text-xs text-base-content/50 mt-1">
+          What this camera overlooks, what counts as expected there, and where the door
+          and street sit in the frame. The geometry is what lets the model turn on-screen
+          movement into "toward the house" or "away toward the street".
+        </div>
+      </div>
+      <textarea id="site-context" rows="18"
+                class="textarea textarea-bordered w-full font-mono text-xs leading-relaxed"
+                spellcheck="false"></textarea>
+    </section>
+
+    <section class="card card-rich bg-base-100 shadow-md p-4 flex flex-col gap-3">
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <div class="text-xs uppercase tracking-wide text-base-content/60">Known routines</div>
+          <div class="text-xs text-base-content/50 mt-1">
+            Regular comings and goings. Activity matching one of these inside its time
+            window is not flagged, so the alert feed stays worth reading.
+          </div>
+        </div>
+        <button type="button" id="add-routine" class="btn btn-sm btn-outline btn-primary flex-none">
+          Add routine
+        </button>
+      </div>
+      <div id="routines" class="flex flex-col gap-3"></div>
+      <div id="routines-empty" class="text-sm text-base-content/50 hidden">
+        No routines configured — every appearance will be judged on the site context alone.
+      </div>
+    </section>
+
+    <section class="card card-rich bg-base-100 shadow-md p-4 flex flex-col gap-3">
+      <div>
+        <div class="text-xs uppercase tracking-wide text-base-content/60">Scene time override</div>
+        <div class="text-xs text-base-content/50 mt-1">
+          For replaying recorded footage: tells the model when the scene happens, e.g.
+          <code>Tuesday 14:10</code>. Leave empty on a live camera, where wall-clock time
+          is the scene time.
+        </div>
+      </div>
+      <input type="text" id="scene-time" placeholder="(empty — use real clock)"
+             class="input input-bordered w-full max-w-xs" autocomplete="off">
+    </section>
+
+    <div class="flex items-center gap-3">
+      <button type="button" id="save" class="btn btn-primary">Save changes</button>
+      <button type="button" id="reload" class="btn btn-ghost">Discard &amp; reload</button>
+      <span id="save-status" class="text-sm"></span>
+    </div>
+  </main>
+
+  <template id="routine-template">
+    <div class="routine-row rounded-lg border border-white/10 p-3 flex flex-col gap-2">
+      <div class="flex gap-2 flex-wrap">
+        <input type="text" data-field="label" placeholder="Label, e.g. Resident leaves for work"
+               class="input input-sm input-bordered flex-1 min-w-48" autocomplete="off">
+        <input type="text" data-field="days" placeholder="Days, e.g. Mon-Fri"
+               class="input input-sm input-bordered w-32" autocomplete="off">
+        <input type="text" data-field="window" placeholder="Window, e.g. 09:40-10:20"
+               class="input input-sm input-bordered w-36" autocomplete="off">
+        <button type="button" data-action="remove" class="btn btn-sm btn-ghost text-error">Remove</button>
+      </div>
+      <textarea data-field="description" rows="2" spellcheck="false"
+                placeholder="What this looks like on camera — direction of travel, what they carry."
+                class="textarea textarea-bordered textarea-sm w-full"></textarea>
+    </div>
+  </template>
+
+  <script>
+    document.documentElement.dataset.theme =
+      window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  </script>
+  <script src="config.js"></script>
+</body>
+</html>

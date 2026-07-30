@@ -10,7 +10,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from flask import Flask, Response, jsonify, request, send_from_directory
 
 from capture import LiveStreamSource, VideoFileSource
-from config import CLIP_ADVANCE_SECONDS
+from config import CLIP_ADVANCE_SECONDS, get_config, update_config
 from dashboard.backend.state import DashboardState
 from monitor.resources import read_stats
 from reasoning.loop import run_reasoning_loop
@@ -36,6 +36,7 @@ def _stats_loop() -> None:
             ram_total_gb=stats.ram_total_gb,
             cpu_pct=stats.cpu_pct,
             stats_source=stats.source,
+            cpu_cores=stats.cpu_cores,
         )
 
 
@@ -84,18 +85,51 @@ def stream():
 
 
 @app.route("/api/frame")
-def frame():
-    """Serves the most recent reasoned-about frame from memory.
+@app.route("/api/frame/<int:frame_id>")
+def frame(frame_id: int | None = None):
+    """Serves a reasoned-about frame from memory — the latest, or a specific past one.
 
     Served per-request rather than embedded in every SSE tick: the frame only
     changes once per sampling interval, so base64-ing it into a 1Hz stream would
-    waste bandwidth for no benefit.
+    waste bandwidth for no benefit. Past frames are addressed by id so clicking a
+    history row shows exactly the image that row's verdict was derived from.
     """
-    jpeg = state.get_frame()
+    jpeg = state.get_frame(frame_id)
     if jpeg is None:
         return "", 204
     return Response(jpeg, mimetype="image/jpeg",
                     headers={"Cache-Control": "no-store"})
+
+
+@app.route("/api/config", methods=["GET", "POST"])
+def config_api():
+    """Reads and updates the site-specific config the Config page edits.
+
+    Changes apply to the next inference — the prompt builder reads the live store on
+    every call, so there's no restart and no need to interrupt the reasoning loop.
+    """
+    if request.method == "GET":
+        return jsonify(get_config())
+
+    payload = request.get_json(silent=True) or {}
+    routines = payload.get("routines")
+    if routines is not None and not isinstance(routines, list):
+        return jsonify({"error": "routines must be a list"}), 400
+    # A malformed routine would reach the prompt as a confusing fragment rather than
+    # failing loudly, so reject it here where the user can still see the message.
+    for entry in routines or []:
+        if not isinstance(entry, dict) or not entry.get("label"):
+            return jsonify({"error": "each routine needs at least a label"}), 400
+
+    try:
+        updated = update_config(
+            site_context=payload.get("site_context"),
+            routines=routines,
+            scene_time=payload.get("scene_time"),
+        )
+    except Exception as exc:
+        return jsonify({"error": f"{type(exc).__name__}: {exc}"}), 500
+    return jsonify(updated)
 
 
 @app.route("/api/ask", methods=["POST"])

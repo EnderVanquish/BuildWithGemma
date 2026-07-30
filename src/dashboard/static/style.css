@@ -37,16 +37,57 @@ body {
   color: transparent;
 }
 
-.status-badge[data-status="good"] {
-  background: color-mix(in srgb, var(--status-good) 16%, var(--dark-surface));
-  color: var(--status-good);
-  border: 1px solid color-mix(in srgb, var(--status-good) 40%, transparent);
+.argus-mark {
+  flex: none;
+  /* Matches the glow the brand blues carry elsewhere in the UI, so the mark reads as
+     part of the same design rather than a pasted-in icon. */
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--brand-blue-light) 35%, transparent));
 }
 
-.status-badge[data-status="critical"] {
-  background: color-mix(in srgb, var(--status-critical) 16%, var(--dark-surface));
-  color: var(--status-critical);
-  border: 1px solid color-mix(in srgb, var(--status-critical) 40%, transparent);
+/* Traffic light for a verdict: green = nothing of concern, yellow = worth a look,
+   red = probable crime in progress. Deliberately coarser than the four severity
+   levels — the point is to be readable at a glance from across a room. */
+.status-light {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  flex: none;
+  display: inline-block;
+}
+
+.status-light[data-level="green"] {
+  background: var(--status-good);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--status-good) 20%, transparent);
+}
+
+.status-light[data-level="yellow"] {
+  background: var(--status-warning);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--status-warning) 20%, transparent);
+}
+
+.status-light[data-level="red"] {
+  background: var(--status-critical);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--status-critical) 20%, transparent);
+}
+
+/* Sync indicator: green while the SSE stream is delivering updates, red the moment
+   it drops. Hover gives the wording — the dot alone must not be the only signal. */
+.sync-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  display: inline-block;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sync-dot[data-status="synced"] {
+  background: var(--status-good);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--status-good) 22%, transparent);
+}
+
+.sync-dot[data-status="stale"] {
+  background: var(--status-critical);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--status-critical) 22%, transparent);
 }
 
 .severity-badge[data-severity="none"] {
@@ -109,4 +150,10 @@ body {
 
 .history-row:hover {
   background: color-mix(in srgb, var(--brand-blue-light) 8%, transparent);
+}
+
+/* The row whose snapshot is currently pinned in the preview above. */
+.history-row-active {
+  background: color-mix(in srgb, var(--brand-blue-light) 16%, transparent);
+  box-shadow: inset 3px 0 0 0 var(--brand-blue-light);
 }
