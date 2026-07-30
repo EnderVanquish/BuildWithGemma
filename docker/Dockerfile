@@ -2,8 +2,6 @@
 # resource-capped container (see resource_caps.md for --memory/--cpus rationale).
 FROM python:3.12-slim
 
-ARG MODEL_NAME=gemma3n:e2b
-ENV MODEL_NAME=${MODEL_NAME}
 ENV OLLAMA_HOST=0.0.0.0:11434
 
 RUN apt-get update \
@@ -16,6 +14,11 @@ WORKDIR /app
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Placed just before the model pull (not at the top of the file) so changing
+# the model tag only invalidates this layer onward, not apt/pip too.
+ARG MODEL_NAME=gemma4:e2b
+ENV MODEL_NAME=${MODEL_NAME}
 
 COPY docker/pull_model.sh /tmp/pull_model.sh
 RUN chmod +x /tmp/pull_model.sh \

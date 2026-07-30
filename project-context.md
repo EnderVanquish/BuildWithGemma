@@ -115,6 +115,35 @@ one-sentence hook.
   prompt as extra context, **not** face recognition. Keeps the privacy-first framing and
   avoids turning the system into a classifier. Not yet implemented.
 
+## Validated findings (2026-07-30, during M1/M2)
+- **Gemma 4 vision is broken on native Windows Ollama, and works fine on Linux.**
+  Confirmed empirically: on Windows (Ollama 0.32.5), `gemma4:e2b` reports `vision` in its
+  capabilities and accepts images without error, but the model's own reasoning trace states
+  no image was received; it either says "please provide an image" or hallucinates an
+  unrelated description. Reproduced via the Python client, the CLI, and the raw HTTP API,
+  so it is not our code. Matches open upstream issues ollama/ollama#16532, #16597, #16874;
+  the fix (PR #16879) is unmerged as of this date. **Inside the Linux container the same
+  model correctly describes the same image**, so the reasoning pipeline must be developed
+  and demoed via the container, not native Windows.
+- **`gemma3n:e2b` is NOT multimodal** — `ollama show` lists only `completion` (no vision).
+  An early Dockerfile default accidentally baked this model in; it cannot do frame
+  reasoning at all and is not a usable fallback. `docker/Dockerfile`'s `MODEL_NAME` arg was
+  corrected to `gemma4:e2b` and moved below the pip layer so future model-tag changes don't
+  invalidate the apt/pip cache.
+- **`psutil.virtual_memory()` reports HOST memory even inside a container** (it reads
+  non-namespaced /proc/meminfo), which would have made the dashboard show e.g. "15.4 / 6.0
+  GB" and misrepresent the project's central resource-cap claim. `src/monitor/resources.py`
+  now reads cgroup v2/v1 (`memory.current`/`memory.max`) instead, falling back to psutil
+  only outside a container and labelling which source is in use so the UI never implies a
+  cap that isn't enforced. Verified inside the capped container: reports `0.46 / 6.0 GB,
+  source=cgroup`, and `memory.max` reads exactly 6442450944 bytes = the `--memory=6g` cap.
+- **Ask-a-question works end-to-end** against real Gemma (text-only, so unaffected by the
+  vision bug). Given the seeded log it correctly answered "Did anything concerning happen?"
+  with the specific unusual event, its timestamp, and its severity.
+- **CPU-only inference latency is significant** (tens of seconds per multimodal call under
+  the cap), which supports the periodic-sampling design choice rather than undermining it —
+  this is the number the dashboard's tokens/sec tile exists to make concrete.
+
 ## Build order (revised mid-build)
 Originally planned as Docker-first (Docker was M1, before the reasoning pipeline). In
 practice, the model bake-in step inside the Docker build was network-bound and slow
