@@ -5,14 +5,27 @@ and design decisions, see `project-context.md` — this file only covers what th
 
 ## Directory map
 ```
-docker/       Dockerfile, entrypoint, resource cap docs (all-in-one: Python + Ollama + Gemma)
+config/         Site-specific config, editable from the dashboard's Config page:
+                site_context.txt (what the camera watches + frame geometry) and
+                routines.json (known comings/goings + scene-time override)
+docker/         Dockerfile, entrypoint, model pull script, resource cap docs
+                (all-in-one image: Python + Ollama + Gemma)
+scripts/        Host-side helpers: status.py (dashboard state), test_routine_check.py
 src/capture/    Frame source abstraction (video file / live feed)
-src/reasoning/  Ollama client, prompt templates, rolling history buffer, output schema
-src/monitor/    RAM/CPU stats (psutil), network traffic check
-src/dashboard/  backend/ (Flask app) + static/ (HTML/JS/CSS dashboard page)
-demo/clips/     Scripted video snippets used for the recorded demo
+src/reasoning/  Ollama client, prompt templates, rolling history, schema,
+                routine_check.py (deterministic routine-window enforcement)
+src/monitor/    RAM/CPU stats (cgroup-aware), network traffic check
+src/dashboard/  backend/ (Flask app + in-memory state) +
+                static/ (index.html monitor page, config.html, vendor/ for daisyUI)
+demo/clips/     Video snippets used for the recorded demo (gitignored — see below)
 demo/scenarios/ History-injection scripts for the temporal-reasoning proof
 ```
+
+`config/` is read through `src/config.py`'s `get_*()` accessors, never as import-time
+constants — the Config page edits must reach the next inference without a restart.
+
+Demo clips are gitignored and are third-party footage. They are for local dev only and
+must not be republished in the demo video, writeup, or repo.
 See the approved plan at project-context.md's milestone breakdown for what goes in each
 folder as it's built out.
 
