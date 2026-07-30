@@ -1,0 +1,112 @@
+:root {
+  --status-good:     #0ca30c;
+  --status-warning:  #fab219;
+  --status-serious:  #ec835a;
+  --status-critical: #d03b3b;
+  --text-muted:      #898781;
+
+  --brand-blue-deep:  #1e3fe0;
+  --brand-blue-light: #33b8d9;
+  --dark-surface:     #1c2333;
+}
+
+/* Pull the brand's two blues into daisyUI's actual theme variables so every
+   built-in component (btn-primary, progress-primary, links, focus rings) picks
+   them up automatically, instead of only recoloring our own custom elements. */
+[data-theme="dark"] {
+  --color-primary: var(--brand-blue-deep);
+  --color-primary-content: #ffffff;
+  --color-secondary: var(--brand-blue-light);
+  --color-secondary-content: #06202b;
+  --color-accent: var(--brand-blue-light);
+  --color-accent-content: #06202b;
+}
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  background:
+    radial-gradient(ellipse 900px 500px at 15% -10%, color-mix(in srgb, var(--brand-blue-deep) 20%, transparent), transparent),
+    radial-gradient(ellipse 700px 500px at 100% 0%, color-mix(in srgb, var(--brand-blue-light) 14%, transparent), transparent);
+  background-attachment: fixed;
+}
+
+.brand-title {
+  background: linear-gradient(100deg, var(--brand-blue-light), var(--brand-blue-deep) 70%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.status-badge[data-status="good"] {
+  background: color-mix(in srgb, var(--status-good) 16%, var(--dark-surface));
+  color: var(--status-good);
+  border: 1px solid color-mix(in srgb, var(--status-good) 40%, transparent);
+}
+
+.status-badge[data-status="critical"] {
+  background: color-mix(in srgb, var(--status-critical) 16%, var(--dark-surface));
+  color: var(--status-critical);
+  border: 1px solid color-mix(in srgb, var(--status-critical) 40%, transparent);
+}
+
+.severity-badge[data-severity="none"] {
+  color: var(--text-muted);
+  border: 1px solid color-mix(in srgb, var(--text-muted) 35%, transparent);
+}
+
+.severity-badge[data-severity="low"] {
+  background: color-mix(in srgb, var(--status-warning) 18%, var(--dark-surface));
+  color: var(--status-warning);
+  border: 1px solid color-mix(in srgb, var(--status-warning) 40%, transparent);
+}
+
+.severity-badge[data-severity="medium"] {
+  background: color-mix(in srgb, var(--status-serious) 18%, var(--dark-surface));
+  color: var(--status-serious);
+  border: 1px solid color-mix(in srgb, var(--status-serious) 40%, transparent);
+}
+
+.severity-badge[data-severity="high"] {
+  background: color-mix(in srgb, var(--status-critical) 18%, var(--dark-surface));
+  color: var(--status-critical);
+  border: 1px solid color-mix(in srgb, var(--status-critical) 40%, transparent);
+}
+
+/* Richness pass: depth + brand accents on top of daisyUI's flat cards */
+.card-rich {
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-rich::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--brand-blue-light), var(--brand-blue-deep));
+}
+
+.card-rich:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px -8px color-mix(in srgb, var(--brand-blue-deep) 35%, transparent);
+}
+
+.stat-icon {
+  color: var(--brand-blue-light);
+  opacity: 0.9;
+}
+
+.frame-glow {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--brand-blue-light) 30%, transparent),
+              0 0 32px -8px color-mix(in srgb, var(--brand-blue-deep) 55%, transparent);
+}
+
+.history-row {
+  transition: background-color 0.15s ease;
+  border-radius: 8px;
+}
+
+.history-row:hover {
+  background: color-mix(in srgb, var(--brand-blue-light) 8%, transparent);
+}
