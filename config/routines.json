@@ -1,0 +1,17 @@
+{
+  "routines": [
+    {
+      "label": "Resident leaves for work",
+      "days": "Mon-Fri",
+      "description": "A resident exits the front door and walks away from the house toward the street or driveway. They may be carrying a bag, backpack, or personal items.",
+      "window": "09:40-10:20"
+    },
+    {
+      "label": "Resident returns from work",
+      "days": "Mon-Fri",
+      "description": "A resident approaches the house from the street or driveway and enters the front door. They may be carrying bags or shopping.",
+      "window": "17:40-18:30"
+    }
+  ],
+  "scene_time": "Tuesday 14:10"
+}

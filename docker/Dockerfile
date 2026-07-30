@@ -27,6 +27,10 @@ RUN chmod +x /tmp/pull_model.sh \
 
 COPY src/ /app/src
 
+# Site config is baked in so the image runs standalone. Bind-mount config/ over it to
+# edit these from the host; the Config page writes back to whatever is mounted here.
+COPY config/ /app/config
+
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 

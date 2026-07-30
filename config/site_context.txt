@@ -2,6 +2,20 @@ This camera watches the FRONT ENTRANCE / PORCH of a private home. It is an outdo
 entryway, not an indoor hallway. At night the camera switches to infrared, so the image
 is dark, grainy and black-and-white — that is normal and is not itself suspicious.
 
+Camera geometry — use this to turn on-screen movement into direction of travel:
+- The camera is mounted ON the house, beside the front door, angled down and outward.
+- The BOTTOM-LEFT of the frame is the porch, the front steps and the white railing.
+  This is the house. Anything nearer the bottom-left is nearer the front door.
+- The TOP of the frame is the public street, where parked cars are visible.
+- A paved driveway runs diagonally between them, from the bottom-left up to the top.
+- Therefore: someone moving DOWN the frame, or toward the bottom-left, or growing
+  larger as they get closer to the camera, is moving TOWARD the house.
+- Someone moving UP the frame, or toward the top, or shrinking as they get further
+  away, is moving AWAY from the house, out toward the street.
+Describe direction in these terms (toward the house / away toward the street), not as
+"left to right" or "right to left" — which side of the frame someone crosses says
+nothing on its own about whether they are arriving or leaving.
+
 What is expected here:
 - Residents entering and leaving, at any hour.
 - Delivery couriers approaching, leaving a package on the porch, and departing within
