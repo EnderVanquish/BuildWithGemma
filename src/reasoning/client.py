@@ -39,21 +39,35 @@ def _encode_frame(frame: np.ndarray) -> bytes:
 
 
 def reason_about_frame(
-    frame: np.ndarray, history: list[ObservationRecord]
+    frame: np.ndarray,
+    history: list[ObservationRecord],
+    previous_frame: np.ndarray | None = None,
+    avoid_repeating: str | None = None,
 ) -> tuple[ObservationRecord, float | None]:
     """Returns the parsed observation and the measured tokens/sec for this call.
+
+    When a previous frame is supplied, both images are sent so the model can compare
+    them. This is not an optional refinement: direction of travel and "arrived
+    empty-handed, leaving with a box" are not recoverable from a single still, and
+    asking for them from one frame produced confidently wrong guesses about which way
+    a person was walking.
 
     Ollama reports eval_count/eval_duration per response, so tokens/sec is measured
     from the model's own numbers rather than wall-clock guesswork.
     """
+    images = ([_encode_frame(previous_frame)] if previous_frame is not None else []) + [
+        _encode_frame(frame)
+    ]
     response = _client.chat(
         model=MODEL_NAME,
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
             {
                 "role": "user",
-                "content": build_user_prompt(history),
-                "images": [_encode_frame(frame)],
+                "content": build_user_prompt(history,
+                                             paired=previous_frame is not None,
+                                             avoid_repeating=avoid_repeating),
+                "images": images,
             },
         ],
         format="json",
