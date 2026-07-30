@@ -1,0 +1,21 @@
+This camera watches the FRONT ENTRANCE / PORCH of a private home. It is an outdoor
+entryway, not an indoor hallway. At night the camera switches to infrared, so the image
+is dark, grainy and black-and-white — that is normal and is not itself suspicious.
+
+What is expected here:
+- Residents entering and leaving, at any hour.
+- Delivery couriers approaching, leaving a package on the porch, and departing within
+  roughly a minute, typically between 09:00 and 18:00.
+- Packages sitting on the porch after a delivery, sometimes for hours, until a resident
+  collects them by taking them INTO the house.
+
+What is NOT expected, and should be treated as serious:
+- Anyone picking up a package and carrying it AWAY from the house, out toward the street
+  or driveway, rather than inside. This is package theft and is the single most important
+  thing this camera exists to catch.
+- A package that was present in earlier observations and is absent in a later one, with
+  an unfamiliar person nearby in between.
+- An unfamiliar person approaching the entrance late at night or in the early hours.
+- Someone lingering near the entrance without approaching the door, looking around, or
+  leaving and returning repeatedly over a short period.
+- Anyone appearing to check whether they are being observed before acting.

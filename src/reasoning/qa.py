@@ -1,6 +1,6 @@
 import ollama
 
-from config import MODEL_NAME, OLLAMA_URL
+from config import MODEL_NAME, OLLAMA_URL, TEMPERATURE
 
 from .prompts import format_history
 from .schema import ObservationRecord
@@ -22,5 +22,6 @@ def ask_about_history(question: str, history: list[ObservationRecord]) -> str:
             {"role": "user", "content": f"Log:\n{format_history(history)}\n\nQuestion: {question}"},
         ],
         think=False,
+        options={"temperature": TEMPERATURE},
     )
     return response["message"]["content"]

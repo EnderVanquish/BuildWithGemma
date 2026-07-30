@@ -6,10 +6,36 @@ on Windows this must point at the container's Ollama rather than the host's.
 """
 
 import os
+from datetime import timedelta, timezone
+from pathlib import Path
 
 from dotenv import load_dotenv
 
 load_dotenv()
+
+# Display timezone for observation timestamps. A fixed offset rather than zoneinfo:
+# IST has no DST so the offset is exact year-round, and it avoids depending on the
+# tzdata package, which Windows doesn't ship.
+_tz_offset_minutes = int(os.getenv("DISPLAY_TZ_OFFSET_MINUTES", "330"))  # +05:30 IST
+DISPLAY_TZ = timezone(timedelta(minutes=_tz_offset_minutes))
+
+# Low temperature on purpose. Gemma 4's default is 1.0, which for a structured
+# judgement task produced visibly unstable verdicts — near-identical frames swung
+# none -> medium -> low across consecutive samples. Security judgements need to be
+# reproducible, so creativity is not wanted here.
+TEMPERATURE = float(os.getenv("TEMPERATURE", "0.15"))
+
+# Free-text description of what this camera watches and what counts as expected.
+# This is the "household/context registry": it gives the model the situational
+# knowledge a resident has and a frame alone cannot supply (that this is an entrance
+# rather than a hallway, when deliveries are normal, that packages get left here).
+# Kept as plain text fed into the prompt, deliberately NOT face recognition — that
+# would turn the system back into a classifier and undercut the privacy claim.
+_site_context_file = Path(__file__).resolve().parents[1] / "site_context.txt"
+SITE_CONTEXT = os.getenv("SITE_CONTEXT") or (
+    _site_context_file.read_text(encoding="utf-8").strip()
+    if _site_context_file.exists() else ""
+)
 
 # QAT (quantization-aware trained) rather than the default post-training-quantized
 # gemma4:e2b: 4.34GB vs 7.16GB on disk (~3.6GB vs ~5.87GB resident), which is the

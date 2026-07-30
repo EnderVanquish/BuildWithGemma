@@ -1,11 +1,11 @@
 import json
-from datetime import datetime, timezone
+from datetime import datetime
 
 import cv2
 import numpy as np
 import ollama
 
-from config import MAX_FRAME_DIM, MODEL_NAME, OLLAMA_URL
+from config import DISPLAY_TZ, MAX_FRAME_DIM, MODEL_NAME, OLLAMA_URL, TEMPERATURE
 
 from .prompts import SYSTEM_PROMPT, build_user_prompt
 from .schema import ObservationRecord
@@ -58,11 +58,12 @@ def reason_about_frame(
         ],
         format="json",
         think=False,
+        options={"temperature": TEMPERATURE},
     )
 
     payload = json.loads(response["message"]["content"])
     record = ObservationRecord(
-        timestamp=datetime.now(timezone.utc).strftime("%H:%M:%S"),
+        timestamp=datetime.now(DISPLAY_TZ).strftime("%H:%M:%S"),
         observation=payload["observation"],
         unusual=payload["unusual"],
         severity=payload["severity"],
