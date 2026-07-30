@@ -1,4 +1,7 @@
-opencv-python
+# headless: the regular opencv-python links against X11 libs (libxcb.so.1 etc.)
+# that python:3.12-slim doesn't ship, so it fails to import in the container. We only
+# decode/encode/resize frames and never open a window, so the GUI build is dead weight.
+opencv-python-headless
 ollama
 flask
 psutil

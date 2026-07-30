@@ -5,12 +5,12 @@ import cv2
 import numpy as np
 import ollama
 
-from config import MAX_FRAME_DIM, MODEL_NAME, OLLAMA_HOST
+from config import MAX_FRAME_DIM, MODEL_NAME, OLLAMA_URL
 
 from .prompts import SYSTEM_PROMPT, build_user_prompt
 from .schema import ObservationRecord
 
-_client = ollama.Client(host=OLLAMA_HOST)
+_client = ollama.Client(host=OLLAMA_URL)
 
 
 def downscale(frame: np.ndarray, max_dim: int = MAX_FRAME_DIM) -> np.ndarray:

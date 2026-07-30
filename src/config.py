@@ -1,10 +1,8 @@
 """App-wide configuration, env-overridable.
 
-OLLAMA_HOST matters more than it looks: Gemma 4 vision is broken on native Windows
-Ollama (see project-context.md "Validated findings"), so during development on
-Windows this should point at the container's Ollama (default below) rather than the
-host's. When the whole stack runs inside the container, the in-container default
-(localhost:11434) is correct.
+ARGUS_OLLAMA_URL matters more than it looks: Gemma 4 vision is broken on native
+Windows Ollama (see project-context.md "Validated findings"), so during development
+on Windows this must point at the container's Ollama rather than the host's.
 """
 
 import os
@@ -20,9 +18,13 @@ load_dotenv()
 # so this is a near-free win rather than a quality-for-size trade.
 MODEL_NAME = os.getenv("MODEL_NAME", "gemma4:e2b-it-qat")
 
-# Host default assumes the dev-on-Windows case: the container publishes its Ollama
-# on 11435. Inside the container, set OLLAMA_HOST=http://localhost:11434.
-OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11435")
+# Deliberately NOT called OLLAMA_HOST: Ollama's own server reads that variable to
+# decide what address to bind to (the Dockerfile sets it to 0.0.0.0:11434), so reusing
+# the name for the client URL would collide and break the server inside the container.
+#
+# Default assumes dev-on-Windows, where the container publishes Ollama on 11435.
+# Inside the container the entrypoint sets ARGUS_OLLAMA_URL=http://localhost:11434.
+OLLAMA_URL = os.getenv("ARGUS_OLLAMA_URL", "http://localhost:11435")
 
 # Wall-clock floor between samples. Set ABOVE measured inference time on purpose.
 #

@@ -1,11 +1,11 @@
 import ollama
 
-from config import MODEL_NAME, OLLAMA_HOST
+from config import MODEL_NAME, OLLAMA_URL
 
 from .prompts import format_history
 from .schema import ObservationRecord
 
-_client = ollama.Client(host=OLLAMA_HOST)
+_client = ollama.Client(host=OLLAMA_URL)
 
 QA_SYSTEM_PROMPT = """You are answering questions about a security camera's observation \
 log. You are given the log (a list of past observations with timestamps, whether each \
