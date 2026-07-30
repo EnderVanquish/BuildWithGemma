@@ -10,7 +10,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from flask import Flask, Response, jsonify, request, send_from_directory
 
 from capture import LiveStreamSource, VideoFileSource
-from config import SAMPLE_INTERVAL_SECONDS
+from config import CLIP_ADVANCE_SECONDS
 from dashboard.backend.state import DashboardState
 from monitor.resources import read_stats
 from reasoning.loop import run_reasoning_loop
@@ -54,12 +54,13 @@ def _reasoning_thread() -> None:
               "(dashboard will show stats only).")
         return
 
-    # A recorded clip advances in video time by the sampling interval, so successive
+    # A recorded clip seeks forward CLIP_ADVANCE_SECONDS per sample so successive
     # samples show genuinely different moments (as a live camera would) rather than
-    # near-identical consecutive frames.
+    # near-identical consecutive frames. A live stream needs no such seeking — it is
+    # already at "now" whenever we read it.
     source = (LiveStreamSource(FRAME_SOURCE) if SOURCE_KIND == "stream"
               else VideoFileSource(FRAME_SOURCE, loop=True,
-                                   advance_seconds=SAMPLE_INTERVAL_SECONDS))
+                                   advance_seconds=CLIP_ADVANCE_SECONDS))
     print(f"[argus] reasoning loop starting on {SOURCE_KIND}: {FRAME_SOURCE}")
     run_reasoning_loop(source, _on_observation)
 

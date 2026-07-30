@@ -19,10 +19,18 @@ MODEL_NAME = os.getenv("MODEL_NAME", "gemma4:e2b")
 # on 11435. Inside the container, set OLLAMA_HOST=http://localhost:11434.
 OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11435")
 
-# Seconds between frame samples. Deliberately periodic rather than continuous —
-# an edge-efficiency design choice, and CPU-only inference takes tens of seconds
-# per call anyway.
+# Wall-clock floor between samples. Deliberately periodic rather than continuous —
+# an edge-efficiency design choice. Note this is a *floor*, not the real cadence:
+# CPU-only inference currently takes ~60-90s, which exceeds this, so the actual
+# sampling rate is inference-bound. It only starts to bite on faster hardware.
 SAMPLE_INTERVAL_SECONDS = float(os.getenv("SAMPLE_INTERVAL_SECONDS", "10"))
+
+# How far to seek forward through a *recorded clip* per sample. Deliberately separate
+# from SAMPLE_INTERVAL_SECONDS: that one paces real time, this one controls how much
+# of the footage each sample skips. Tune it to the clip length — for a 50s clip, 5s
+# gives ~10 distinct moments, whereas reusing a 30s wall-clock interval here would
+# yield fewer than 2 before looping.
+CLIP_ADVANCE_SECONDS = float(os.getenv("CLIP_ADVANCE_SECONDS", "5"))
 
 HISTORY_MAX_LEN = int(os.getenv("HISTORY_MAX_LEN", "10"))
 
